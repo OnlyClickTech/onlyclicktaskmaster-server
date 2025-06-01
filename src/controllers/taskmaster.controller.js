@@ -1,11 +1,11 @@
 const Taskmaster = require("../models/taskmaster.model.js");
-const { category } = require("../utils/constants.js");
+const { category: validCategories } = require('../utils/constants');
 
 const createTaskmaster = async (req, res) => {
     try {
-        const { name, phoneNumber, homeAddress, category, status } = req.body;
-        
-        if (!category.includes(category)) {
+        const { name, phoneNumber, homeAddress, masterId, category, status } = req.body;
+
+        if (!validCategories.includes(category)) {
             return res.status(400).json({ error: "Invalid category" });
         }
 
@@ -24,6 +24,7 @@ const createTaskmaster = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+
 
 const getAllTaskmasters = async (req, res) => {
     try {
@@ -56,22 +57,11 @@ const getTaskmasterById = async (req, res) => {
 
 const updateTaskmaster = async (req, res) => {
     try {
-        const { name, phoneNumber, homeAddress, category, status } = req.body;
-        const updates = {};
-        
-        if (name) updates.name = name;
-        if (phoneNumber) updates.phoneNumber = phoneNumber;
-        if (homeAddress) updates.homeAddress = homeAddress;
-        if (category) {
-            if (!category.includes(category)) {
-                return res.status(400).json({ error: "Invalid category" });
-            }
-            updates.category = category;
-        }
-        if (status) updates.status = status;
+        const { id } = req.params;
+        const updates = req.body; 
 
         const updatedTaskmaster = await Taskmaster.findByIdAndUpdate(
-            req.params.id,
+            id,
             updates,
             { new: true, runValidators: true }
         ).populate('masterId', '-password');

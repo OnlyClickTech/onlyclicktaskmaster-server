@@ -72,3 +72,10 @@ const subCategory = {
     },
   },
 };
+
+module.exports = {
+  roles,
+  status,
+  category,
+  subCategory,
+};

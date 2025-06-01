@@ -7,6 +7,12 @@ const taskmasterSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    masterId: {
+        type: String,
+        trim: true,
+        required: true,
+        unique: true,
+    },
     phoneNumber: {
         type: String,
         required: true,
@@ -28,12 +34,6 @@ const taskmasterSchema = new mongoose.Schema({
         required: true,
         enum : category,
         default: null,
-        // validate: {
-        //     validator: function(v) {
-        //         return category.map(c => c.toLowerCase()).includes(v.toLowerCase());
-        //     },
-        //     message: props => `${props.value} is not a valid category!`
-        // }
     },
     status: {
         type: String,
