@@ -3,27 +3,42 @@ const { category: validCategories } = require('../utils/constants');
 
 const createTaskmaster = async (req, res) => {
     try {
-        const { name, phoneNumber, homeAddress, masterId, category, status } = req.body;
-
-        if (!validCategories.includes(category)) {
-            return res.status(400).json({ error: "Invalid category" });
-        }
-
-        const newTaskmaster = new Taskmaster({
-            name,
-            phoneNumber,
-            homeAddress,
-            masterId,
-            category,
-            status: status || 'free'
-        });
-
-        const savedTaskmaster = await newTaskmaster.save();
-        res.status(201).json(savedTaskmaster);
+      const { name, phoneNumber, homeAddress, masterId, category, status, coordinates } = req.body;
+  
+      if (!validCategories.includes(category)) {
+        return res.status(400).json({ error: "Invalid category" });
+      }
+  
+      // Validate coordinates
+      if (
+        !coordinates ||
+        coordinates.type !== 'Point' ||
+        !Array.isArray(coordinates.coordinates) ||
+        coordinates.coordinates.length !== 2 ||
+        typeof coordinates.coordinates[0] !== 'number' ||
+        typeof coordinates.coordinates[1] !== 'number'
+      ) {
+        return res.status(400).json({ error: "Latitude and longitude are required and must be numbers" });
+      }
+  
+      const newTaskmaster = new Taskmaster({
+        name,
+        phoneNumber,
+        homeAddress,
+        masterId,
+        category,
+        status: status || 'free',
+        coordinates
+      });
+  
+      const savedTaskmaster = await newTaskmaster.save();
+      res.status(201).json(savedTaskmaster);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+      res.status(400).json({ error: error.message });
     }
-};
+  };
+  
+  
 
 
 const getAllTaskmasters = async (req, res) => {
@@ -90,10 +105,41 @@ const deleteTaskmaster = async (req, res) => {
     }
 };
 
+const getNearbyTaskmasters = async (req, res) => {
+    try {
+      const { lat, lng, category } = req.query;
+  
+      if (!lat || !lng || !category) {
+        return res.status(400).json({ error: "lat, lng, and category are required" });
+      }
+  
+      const taskmasters = await Taskmaster.find({
+        category,
+        status: 'free',
+        coordinates: {
+          $near: {
+            $geometry: {
+              type: "Point",
+              coordinates: [parseFloat(lng), parseFloat(lat)]
+            },
+            $maxDistance: 10000 // 10 kilometers
+          }
+        }
+      });
+  
+      res.status(200).json(taskmasters);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  };
+  
+
 module.exports = {
     createTaskmaster,
     getAllTaskmasters,
     getTaskmasterById,
     updateTaskmaster,
-    deleteTaskmaster
+    deleteTaskmaster,
+    getNearbyTaskmasters
 };
